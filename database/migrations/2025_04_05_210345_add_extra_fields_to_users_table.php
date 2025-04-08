@@ -14,13 +14,14 @@ class AddExtraFieldsToUsersTable extends Migration
             $table->string('neighborhood')->nullable();
             $table->string('city')->nullable();
             $table->string('address')->nullable();
+            $table->string('level')->nullable(); 
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['number_cellphone', 'number_phone', 'neighborhood', 'city', 'address']);
+            $table->dropColumn(['number_cellphone', 'number_phone', 'neighborhood', 'city', 'address', 'level']);
         });
     }
 }

@@ -18,7 +18,10 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
-
+use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
+use Filament\Navigation\MenuItem;
+use Illuminate\Support\Facades\Auth;
+use Joaopaulolndev\FilamentEditProfile\Pages\EditProfilePage;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -26,11 +29,12 @@ class DashboardPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
+            ->topNavigation()
             ->id('dashboard')
             ->path('dashboard')
             ->login()
             ->registration()
-            ->profile()
+            ->passwordReset()
             ->colors([
                 'primary' => Color::Green,
             ])
@@ -42,7 +46,7 @@ class DashboardPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                //Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -59,6 +63,24 @@ class DashboardPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
 
-            ->plugin(FilamentSpatieRolesPermissionsPlugin::make());
+            ->plugins([
+                FilamentEditProfilePlugin::make()
+                    ->setTitle('Mi Perfil')
+                    ->setNavigationLabel('Mi Perfil')
+                    ->setIcon('heroicon-o-user')
+                    ->shouldShowAvatarForm(
+                        value: true,
+                        directory: 'avatars', // Las imágenes se almacenarán en 'storage/app/public/avatars'
+                        rules: 'mimes:jpeg,png|max:1024' // Solo se aceptan archivos JPEG y PNG con un tamaño máximo de 1 MB
+                    )
+                
+            ])
+            ->userMenuItems([
+                'profile' => MenuItem::make()
+                    ->label(fn() => \Illuminate\Support\Facades\Auth::user()->name)
+                    ->url(fn (): string => EditProfilePage::getUrl())
+                    ->icon('heroicon-m-user-circle')
+            ]);
+        //->plugin(FilamentSpatieRolesPermissionsPlugin::make())
     }
 }
