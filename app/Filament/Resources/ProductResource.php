@@ -69,132 +69,137 @@ class ProductResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->canAny(['Admin']) ?? false),
-                Tables\Actions\BulkAction::make('separateProducts')
-                    ->label('Separar Productos')
-                    ->icon('heroicon-o-shopping-cart')
-                    ->action(function (Collection $records, array $data) { 
-                        $cart = [];
-                        $total = 0;
+                    ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->canAny(['Admin']) ?? false),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('separateProducts')
+                ->label('Separar Productos')
+                ->icon('heroicon-o-shopping-cart')
+                ->action(function (array $data) { 
+                    $cart = [];
+                    $total = 0;
 
-                        $userId = \Illuminate\Support\Facades\Auth::id(); // ID del usuario autenticado
-                        $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
+                    $userId = \Illuminate\Support\Facades\Auth::id(); // ID del usuario autenticado
+                    $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
 
-                        $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
+                    $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
 
-                        foreach ($records as $record) { // Itera directamente sobre la colección
-                            $quantity = collect($data['quantities'])->firstWhere('product_id', $record->id)['quantity'] ?? 0;                            if ($quantity > 0) {
-                                if ($record->stock >= $quantity) {
-                                    $record->decrement('stock', $quantity); // Reducir el stock
-                                } else {
-                                    Notification::make()
-                                        ->title('Error')
-                                        ->body("El producto '{$record->name}' no tiene suficiente stock.")
-                                        ->danger()
-                                        ->send();
-                                    continue;
-                                }
+                    foreach ($data['quantities'] as $item) { // Itera sobre los datos enviados en el formulario
+                        $product = Product::find($item['product_id'] ?? null);
+                        $quantity = (float) ($item['quantity'] ?? 0);
 
-                                $subtotal = $quantity * $record->price;
-                                $discountedSubtotal = $subtotal - ($subtotal * ($discount / 100));
-
-                                // Registrar el producto en la tabla inventories
-                                \App\Models\Inventory::updateOrCreate(
-                                    [
-                                        'user_id' => $userId,
-                                        'product_id' => $record->id,
-                                    ],
-                                    [
-                                        'quantity' => DB::raw("quantity + $quantity"), // Incrementar la cantidad si ya existe
-                                    ]
-                                );
-
-                                $cart[] = [
-                                    'product' => $record->name,
-                                    'quantity' => $quantity,
-                                    'price' => $record->price,
-                                    'subtotal' => $discountedSubtotal,
-                                ];
-                                $total += $discountedSubtotal;
+                        if ($product && $quantity > 0) {
+                            if ($product->stock >= $quantity) {
+                                $product->decrement('stock', $quantity); // Reducir el stock
+                            } else {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body("El producto '{$product->name}' no tiene suficiente stock.")
+                                    ->danger()
+                                    ->send();
+                                continue;
                             }
+
+                            $subtotal = $quantity * (float) $product->price;
+                            $discountedSubtotal = $subtotal - ($subtotal * ($discount / 100));
+
+                            // Registrar el producto en la tabla inventories
+                            \App\Models\Inventory::updateOrCreate(
+                                [
+                                    'user_id' => $userId,
+                                    'product_id' => $product->id,
+                                ],
+                                [
+                                    'quantity' => DB::raw("quantity + $quantity"), // Incrementar la cantidad si ya existe
+                                ]
+                            );
+
+                            $cart[] = [
+                                'product' => $product->name,
+                                'quantity' => $quantity,
+                                'price' => $product->price,
+                                'subtotal' => $discountedSubtotal,
+                            ];
+                            $total += $discountedSubtotal;
                         }
+                    }
 
-                        Notification::make()
-                            ->title('Productos Separados')
-                            ->body("Total con descuento: $" . number_format($total, 2))
-                            ->success()
-                            ->send();
-                    })
-                    ->form([
-                        Forms\Components\Repeater::make('quantities')
-                            ->label('Productos a Separar')
-                            ->schema([
-                                Forms\Components\Select::make('product_id')
-                                    ->label('Producto')
-                                    ->options(Product::all()->pluck('name', 'id'))
-                                    ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(function (callable $set, $state) {
-                                        $product = Product::find($state);
-                                        if ($product) {
-                                            $set('price', $product->price);
-                                        }
-                                    }),
-                                Forms\Components\TextInput::make('price')
-                                    ->label('Precio')
-                                    ->numeric()
-                                    ->disabled(),
-                                Forms\Components\TextInput::make('quantity')
-                                    ->label('Cantidad')
-                                    ->numeric()
-                                    ->required()
-                                    ->minValue(1)
-                                    ->reactive()
-                                    ->afterStateUpdated(function (callable $set, callable $get) {
-                                        $quantity = $get('quantity') ?? 0;
-                                        $price = $get('price') ?? 0;
+                    Notification::make()
+                        ->title('Productos Separados')
+                        ->body("Total con descuento: $" . number_format($total, 2))
+                        ->success()
+                        ->send();
+                })
+                ->form([
+                    Forms\Components\Repeater::make('quantities')
+                        ->label('Productos a Separar')
+                        ->schema([
+                            Forms\Components\Select::make('product_id')
+                                ->label('Producto')
+                                ->options(Product::all()->pluck('name', 'id'))
+                                ->required()
+                                ->reactive()
+                                ->afterStateUpdated(function (callable $set, $state) {
+                                    $product = Product::find($state);
+                                    if ($product) {
+                                        $set('price', $product->price);
+                                    }
+                                }),
+                            Forms\Components\TextInput::make('price')
+                                ->label('Precio')
+                                ->numeric()
+                                ->disabled(),
+                            Forms\Components\TextInput::make('quantity')
+                                ->label('Cantidad')
+                                ->numeric()
+                                ->required()
+                                ->minValue(1)
+                                ->reactive()
+                                ->afterStateUpdated(function (callable $set, callable $get) {
+                                    $quantity = (float) ($get('quantity') ?? 0);
+                                    $price = (float) ($get('price') ?? 0);
 
-                                        $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
-                                        $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
+                                    $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
+                                    $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
 
-                                        $subtotal = $quantity * $price;
-                                        $discountedSubtotal = $subtotal - ($subtotal * ($discount / 100));
+                                    $subtotal = $quantity * $price;
+                                    $discountedSubtotal = $subtotal - ($subtotal * ($discount / 100));
 
-                                        $set('subtotal', $discountedSubtotal);
-                                    }),
-                                Forms\Components\TextInput::make('subtotal')
-                                    ->label('Subtotal con Descuento')
-                                    ->numeric()
-                                    ->disabled(),
-                            ])
-                        
-                            ->columns(4)
-                            ->reactive()
-                            ->afterStateUpdated(function (callable $set, $state) {
-                                $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
-                                $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
+                                    $set('subtotal', $discountedSubtotal);
+                                }),
+                            Forms\Components\TextInput::make('subtotal')
+                                ->label('Subtotal con Descuento')
+                                ->numeric()
+                                ->disabled(),
+                        ])
+                    
+                        ->columns(4)
+                        ->reactive()
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            $userLevel = \Illuminate\Support\Facades\Auth::user()->level;
+                            $discount = \App\Models\Discount::where('level', $userLevel)->value('discount') ?? 0;
 
-                                $total = collect($state ?? [])
-                                    ->sum(fn($item) => ($item['quantity'] ?? 0) * ($item['price'] ?? 0));
+                            $total = collect($state ?? [])
+                                ->sum(fn($item) => (float) ($item['quantity'] ?? 0) * (float) ($item['price'] ?? 0));
 
-                                $totalWithDiscount = $total - ($total * ($discount / 100));
+                            $totalWithDiscount = $total - ($total * ($discount / 100));
 
-                                $set('total', $total);
-                                $set('total_with_discount', $totalWithDiscount);
-                            }),
+                            $set('total', $total);
+                            $set('total_with_discount', $totalWithDiscount);
+                        }),
 
-                        Forms\Components\TextInput::make('total')
-                            ->label('Total (sin descuento)')
-                            ->numeric()
-                            ->disabled()
-                            ->reactive(),
+                    Forms\Components\TextInput::make('total')
+                        ->label('Total (sin descuento)')
+                        ->numeric()
+                        ->disabled()
+                        ->reactive(),
 
-                        Forms\Components\TextInput::make('total_with_discount')
-                            ->label('Total con Descuento')
-                            ->numeric()
-                            ->disabled()
-                            ->reactive(),
-                    ]),
+                    Forms\Components\TextInput::make('total_with_discount')
+                        ->label('Total con Descuento')
+                        ->numeric()
+                        ->disabled()
+                        ->reactive(),
+                ]),
             ]);
     }
 
