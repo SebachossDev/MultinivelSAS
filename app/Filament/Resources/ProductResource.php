@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
 use Filament\Forms;
+use Filament\Notifications\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Notifications\Notification;
@@ -128,6 +129,11 @@ class ProductResource extends Resource
                         ->title('Productos Separados')
                         ->body("Total con descuento: $" . number_format($total, 2))
                         ->success()
+                        ->actions([
+                            Action::make('Ver Inventario')
+                                ->url(route('filament.dashboard.resources.inventories.index'))
+                                ->openUrlInNewTab(false), 
+                        ])                        
                         ->send();
                 })
                 ->form([
