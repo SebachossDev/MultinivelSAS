@@ -70,10 +70,10 @@ class DashboardPanelProvider extends PanelProvider
                     ->setIcon('heroicon-o-user')
                     ->shouldShowAvatarForm(
                         value: true,
-                        directory: 'avatars', // Las imágenes se almacenarán en 'storage/app/public/avatars'
-                        rules: 'mimes:jpeg,png|max:1024' // Solo se aceptan archivos JPEG y PNG con un tamaño máximo de 1 MB
+                        directory: 'avatars',
+                        rules: 'mimes:jpeg,png|max:2048' 
                     )
-                
+                    ->shouldRegisterNavigation(false) 
             ])
             ->userMenuItems([
                 'profile' => MenuItem::make()
@@ -81,6 +81,5 @@ class DashboardPanelProvider extends PanelProvider
                     ->url(fn (): string => EditProfilePage::getUrl())
                     ->icon('heroicon-m-user-circle')
             ]);
-        //->plugin(FilamentSpatieRolesPermissionsPlugin::make())
     }
 }

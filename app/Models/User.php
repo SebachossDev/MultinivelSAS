@@ -98,4 +98,9 @@ class User extends Authenticatable implements HasAvatar
     {
         $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
     }
+
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
+    }
 }
