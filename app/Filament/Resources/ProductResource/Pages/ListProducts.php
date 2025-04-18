@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
 use Filament\Actions;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Resources\Pages\ListRecords;
 
 class ListProducts extends ListRecords
@@ -17,7 +18,7 @@ class ListProducts extends ListRecords
             Actions\CreateAction::make()
             ->label('Crear Producto')
             ->icon('heroicon-o-plus')
-            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->canAny(['Admin']) ?? false),
+            ->visible(fn () => \Illuminate\Support\Facades\Auth::user()?->can('Admin')),
 
         ];
     }

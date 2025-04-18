@@ -11,10 +11,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Traits\HasPermissions;
+use Altwaireb\World\Models\State;
+use Altwaireb\World\Models\City;
 
 class User extends Authenticatable implements HasAvatar
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, HasPermissions;
 
     protected $table = 'users';
 
@@ -26,7 +29,8 @@ class User extends Authenticatable implements HasAvatar
         'number_cellphone',
         'number_phone',
         'neighborhood',
-        'city',
+        'city_id',
+        'department_id',
         'address',
         'level',
         'active',
@@ -103,4 +107,17 @@ class User extends Authenticatable implements HasAvatar
     {
         return $this->hasMany(Inventory::class);
     }
+
+    // Relación con el departamento (State)
+    public function department()
+    {
+        return $this->belongsTo(State::class, 'department_id');
+    }
+
+    // Relación con la ciudad (City)
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use Altwaireb\World\Models\City as ModelsCity;
+use Altwaireb\World\Models\State as ModelsState;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\Role;
 use App\Models\User;
@@ -16,6 +18,8 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use World\Countries\Models\State;
+use World\Countries\Models\City;
 
 class UserResource extends Resource
 {
@@ -40,7 +44,7 @@ class UserResource extends Resource
                     TextInput::make('number_cellphone')->label('Celular')->required(),
                     TextInput::make('number_phone')->label('Teléfono')->nullable(),
                     TextInput::make('neighborhood')->label('Barrio')->nullable(),
-                    TextInput::make('city')->label('Ciudad')->required(),
+
                     TextInput::make('address')->label('Dirección')->required(),
                     TextInput::make('level')->label('Nivel')->nullable(),
                     Toggle::make('active')->label('Activo')->default(false),
@@ -58,7 +62,8 @@ class UserResource extends Resource
                 TextColumn::make('number_cellphone')->label('Celular')->searchable(),
                 TextColumn::make('number_phone')->label('Teléfono')->searchable(),
                 TextColumn::make('neighborhood')->label('Barrio')->searchable(),
-                TextColumn::make('city')->label('Ciudad')->searchable(),
+                TextColumn::make('city.name')->label('Ciudad')->searchable(),
+                TextColumn::make('department.name')->label('Departamento')->searchable(),
                 TextColumn::make('address')->label('Dirección')->searchable(),
                 TextColumn::make('level')->label('Nivel')->searchable()->badge()
                     ->colors([
@@ -106,8 +111,18 @@ class UserResource extends Resource
                             TextInput::make('number_cellphone')->label('Celular')->required(),
                             TextInput::make('number_phone')->label('Teléfono')->nullable(),
                             TextInput::make('neighborhood')->label('Barrio')->nullable(),
-                            TextInput::make('city')->label('Ciudad')->required(),
                             TextInput::make('address')->label('Dirección')->required(),
+                            Select::make('department_id')
+                                ->label('Departamento')
+                                ->options(function () {
+                                    $colombia = \Altwaireb\World\Models\Country::where('name', 'Colombia')->first(); // Busca por nombre
+                                    return \Altwaireb\World\Models\State::where('country_id', $colombia->id)->pluck('name', 'id');
+                                })
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('city_id', null)),
+                            Select::make('city_id')
+                                ->label('Ciudad')
+                                ->options(fn(callable $get) => \Altwaireb\World\Models\City::where('state_id', $get('department_id'))->pluck('name', 'id')),
                             Select::make('level')
                                 ->label('Nivel')
                                 ->options([
@@ -157,8 +172,9 @@ class UserResource extends Resource
                             'number_cellphone' => $data['number_cellphone'],
                             'number_phone' => $data['number_phone'],
                             'neighborhood' => $data['neighborhood'],
-                            'city' => $data['city'],
                             'address' => $data['address'],
+                            'department_id' => $data['department_id'],
+                            'city_id' => $data['city_id'],
                             'level' => $data['level'],
                             'active' => $data['active'],
                         ];
@@ -215,6 +231,23 @@ class UserResource extends Resource
                             TextInput::make('email')->label('Correo')->email()->required()->columnSpan(1),
                             TextInput::make('password')->label('Contraseña')->password()->required()->columnSpan(1),
                             TextInput::make('address')->label('Dirección')->required()->columnSpan(1),
+                            TextInput::make('neighborhood')->label('Barrio')->required()->columnSpan(1),
+                            Select::make('department_id')
+                                ->label('Departamento')
+                                ->required()
+                                ->searchable()
+                                ->options(function () {
+                                    $colombia = \Altwaireb\World\Models\Country::where('name', 'Colombia')->first(); // Busca por nombre
+                                    return \Altwaireb\World\Models\State::where('country_id', $colombia->id)->pluck('name', 'id');
+                                })
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('city_id', null)),
+                            Select::make('city_id')
+                                ->label('Ciudad')
+                                ->required()
+                                ->helperText('Seleccione el departamento primero')
+                                ->searchable()
+                                ->options(fn(callable $get) => \Altwaireb\World\Models\City::where('state_id', $get('department_id'))->pluck('name', 'id')),
                             Select::make('roles')
                                 ->multiple()
                                 ->options(fn() => Role::pluck('name', 'id')->toArray())
@@ -234,7 +267,6 @@ class UserResource extends Resource
                                 ->placeholder('Seleccione un rol')
                                 ->default(fn($record) => $record?->roles->pluck('id')->toArray() ?? []),
                             TextInput::make('number_phone')->label('Teléfono')->numeric()->nullable(),
-                            TextInput::make('city')->label('Ciudad')->required(),
                             TextInput::make('number_cellphone')->label('Celular')->numeric()->required(),
                             Select::make('level')
                                 ->label('Nivel')
@@ -257,13 +289,14 @@ class UserResource extends Resource
                     ])
                     ->action(function (array $data) {
                         $user = User::create([
-                            'dni_number' => $data['dni_number'],
                             'email' => $data['email'],
                             'name' => $data['name'],
+                            'neighborhood' => $data['neighborhood'],
                             'number_phone' => $data['number_phone'],
                             'number_cellphone' => $data['number_cellphone'],
                             'address' => $data['address'],
-                            'city' => $data['city'],
+                            'department_id' => $data['department_id'],
+                            'city_id' => $data['city_id'],
                             'level' => $data['level'],
                             'active' => $data['active'],
                             'password' => bcrypt($data['password']),

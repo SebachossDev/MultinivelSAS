@@ -14,7 +14,8 @@ class AddExtraFieldsToUsersTable extends Migration
             $table->string('neighborhood')->nullable();
             $table->string('city')->nullable();
             $table->string('address')->nullable();
-            $table->string('level')->nullable(); 
+            $table->string('level')->nullable();
+            $table->boolean('active')->default(false);
         });
     }
 
