@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class ProductResource extends Resource
 {
@@ -73,6 +74,8 @@ class ProductResource extends Resource
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
                     ->visible(fn() => Auth::user()->canAny(['Admin']) ?? false),
+                ExportBulkAction::make('Exportar')->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can(['Admin'])),
+
             ])
             ->headerActions([
                 Tables\Actions\Action::make('separateProducts')

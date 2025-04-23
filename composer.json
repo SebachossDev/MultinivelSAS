@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
         "livewire/livewire": "^3.6",
+        "pxlrbt/filament-excel": "^2.4",
         "spatie/laravel-permission": "^6.17"
     },
     "require-dev": {

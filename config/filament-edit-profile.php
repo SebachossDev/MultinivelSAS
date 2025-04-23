@@ -32,22 +32,5 @@ return [
                 'title' => 'Solo se permiten números',
             ],
         ],
-
-        'neighborhood' => [
-            'type' => 'text',
-            'label' => 'Barrio',
-            'placeholder' => 'Ingresa tu barrio',
-            'required' => false,
-            'rules' => ['nullable', 'string', 'max:255'],
-            'column_span' => 'full',
-        ],
-        'address' => [
-            'type' => 'text',
-            'label' => 'Dirección',
-            'placeholder' => 'Ingresa tu dirección',
-            'required' => false,
-            'rules' => ['nullable', 'string', 'max:255'],
-            'column_span' => 'full',
-        ],
     ],
 ];

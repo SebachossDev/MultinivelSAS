@@ -18,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use World\Countries\Models\State;
 use World\Countries\Models\City;
 
@@ -62,8 +63,8 @@ class UserResource extends Resource
                 TextColumn::make('number_cellphone')->label('Celular')->searchable(),
                 TextColumn::make('number_phone')->label('Teléfono')->searchable(),
                 TextColumn::make('neighborhood')->label('Barrio')->searchable(),
-                TextColumn::make('city.name')->label('Ciudad')->searchable(),
                 TextColumn::make('department.name')->label('Departamento')->searchable(),
+                TextColumn::make('city.name')->label('Ciudad')->searchable(),
                 TextColumn::make('address')->label('Dirección')->searchable(),
                 TextColumn::make('level')->label('Nivel')->searchable()->badge()
                     ->colors([
@@ -198,6 +199,7 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()->icon('heroicon-o-trash'),
+                ExportBulkAction::make('Exportar')->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can(['Admin'])),
                 Tables\Actions\BulkAction::make('toggleActive')
                     ->label('Activar/Desactivar Usuarios')
                     ->icon('')
