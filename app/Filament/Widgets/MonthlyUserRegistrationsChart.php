@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\LineChartWidget;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class MonthlyUserRegistrationsChart extends LineChartWidget
@@ -11,6 +12,7 @@ class MonthlyUserRegistrationsChart extends LineChartWidget
     protected static ?string $heading = 'Usuarios Registrados por Mes';
     protected static ?int $sort = 2;
     protected static string $color = 'danger';
+    protected static bool $isLazy = false;
 
     protected function getData(): array
     {
@@ -38,6 +40,17 @@ class MonthlyUserRegistrationsChart extends LineChartWidget
 
     protected function getPollingInterval(): ?string
     {
-        return '10s'; // Actualizar cada 10 segundos
+        return '3s'; // Actualizar cada 10 segundos
+    }
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole(['Admin']);
     }
 }

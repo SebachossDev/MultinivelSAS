@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\DeleteBulkAction;
 
 class DiscountResource extends Resource
 {
@@ -88,7 +89,9 @@ class DiscountResource extends Resource
                         Discount::create($data);
                     }),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                DeleteBulkAction::make()->icon('heroicon-o-trash')
+            ]);
     }
 
     public static function getRelations(): array

@@ -6,12 +6,15 @@ use App\Models\Product;
 use App\Models\Inventory;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InventoryStats extends BaseWidget
 
 {
     protected static ?int $sort = 3;
+    protected static bool $isLazy = false;
+
     protected function getCards(): array
     {
         $totalStock = Product::sum('stock');
@@ -34,5 +37,16 @@ class InventoryStats extends BaseWidget
                 ->description('Valor total de las ventas')
                 ->color('warning'),
         ];
+    }
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole(['Admin']);
     }
 }

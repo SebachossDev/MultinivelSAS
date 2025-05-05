@@ -6,12 +6,14 @@ use Filament\Widgets\BarChartWidget;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\City;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class UserDistributionChart extends BarChartWidget
 {
     protected static ?string $heading = 'Ubicaciónes con el mayor número de usuarios';
     protected static ?int $sort = 2;
+    protected static bool $isLazy = false;
 
     public ?string $filter = 'departments';
 
@@ -55,6 +57,17 @@ class UserDistributionChart extends BarChartWidget
             ],
             'labels' => $data->pluck('name')->toArray(),
         ];
+    }
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole(['Admin']);
     }
 
 }

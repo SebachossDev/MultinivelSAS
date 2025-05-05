@@ -62,9 +62,4 @@ class InventoryResource extends Resource
             'index' => Pages\ListInventories::route('/'),
         ];
     }
-
-    public static function shouldRegisterNavigation(): bool
-    {
-        return Auth::user()->hasAnyRole(['Vendedor', 'Admin']);
-    }
 }

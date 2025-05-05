@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\LineChartWidget;
 use App\Models\Inventory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class MonthlySalesChart extends LineChartWidget
@@ -11,6 +12,7 @@ class MonthlySalesChart extends LineChartWidget
     protected static ?string $heading = 'Ventas Mensuales';
     protected static ?int $sort = 4;
     protected static string $color = 'warning'; 
+    protected static bool $isLazy = false;
 
     protected function getData(): array
     {
@@ -37,6 +39,17 @@ class MonthlySalesChart extends LineChartWidget
 
     protected function getPollingInterval(): ?string
     {
-        return '10s'; // Actualizar cada 10 segundos
+        return '3s'; // Actualizar cada 10 segundos
+    }
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole(['Admin']);
     }
 }

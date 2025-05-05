@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\CustomDashboard;
 use App\Filament\Widgets\InventoryStats;
 use App\Filament\Widgets\LeastSoldProductsChart;
 use App\Filament\Widgets\MonthlySalesChart;
@@ -9,6 +10,7 @@ use App\Filament\Widgets\MonthlyUserRegistrationsChart;
 use App\Filament\Widgets\MostSoldProductsChart;
 use App\Filament\Widgets\UserDistributionChart;
 use App\Filament\Widgets\UserStatsWidget;
+use App\Livewire\CustomRegister;
 use App\Livewire\DepartmentCityProfileComponent;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -39,15 +41,15 @@ class DashboardPanelProvider extends PanelProvider
             ->id('dashboard')
             ->path('dashboard')
             ->login()
-            ->registration()
+            ->registration(CustomRegister::class)
             ->passwordReset()
             ->colors([
-                'primary' => Color::Green,
+                'primary' => Color::Orange,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Dashboard::class,
+                CustomDashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -71,6 +73,7 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\CheckUserActive::class,
             ])
 
             ->plugins([
